@@ -2,7 +2,7 @@ const mongoose=require("mongoose");
 const initData=require("./data.js");
 const Listing=require("../models/listing.js");
 
-const MONGO_URL="mongodb+srv://commandererwin99999_db_user:kI7dPbH7QgGKdi7I@cluster0.zjgfojf.mongodb.net/wanderlust?retryWrites=true&w=majority&appName=Cluster0";
+const MONGO_URL=process.env.MONGO_URI;
 async function main() {
   await mongoose.connect(MONGO_URL, { useNewUrlParser: true, useUnifiedTopology: true });
 }
