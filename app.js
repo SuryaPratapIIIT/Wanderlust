@@ -22,10 +22,10 @@ const dbUrl = process.env.ATLASDB_URL;
 const secret = process.env.SECRET;
 
 if (!dbUrl) {
-  console.error("❌ ATLASDB_URL not defined");
+  console.error(" ATLASDB_URL not defined");
 }
 if (!secret) {
-  console.error("❌ SECRET not defined");
+  console.error(" SECRET not defined");
 }
 
 
@@ -41,7 +41,7 @@ const store = MongoStore.create({
 });
 
 store.on("error", (e) => {
-  console.log("❌ SESSION STORE ERROR", e);
+  console.log(" SESSION STORE ERROR", e);
 });
 
 const sessionOptions = {
