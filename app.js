@@ -8,75 +8,90 @@ const methodOverride = require("method-override");
 const ejsMate = require("ejs-mate");
 const ExpressError = require("./utils/ExpressError.js");
 const session = require("express-session");
-const MongoStore = require('connect-mongo');
+const MongoStore = require("connect-mongo");
 const flash = require("connect-flash");
 const passport = require("passport");
 const LocalStrategy = require("passport-local");
 const User = require("./models/user.js");
-const Listing = require("./models/listing.js");
-const geocodeAddress = require("./utils/geocoder");
 
-const ListingRouter = require("./routes/listing.js");
+// Routes
+const listingRouter = require("./routes/listing.js");
 const reviewRouter = require("./routes/review.js");
 const userRouter = require("./routes/user.js");
 
+// ======================
+// ENV VARIABLES
+// ======================
 const dbUrl = process.env.ATLASDB_URL;
-const secret = process.env.SECRET ;
-// 1. Database Connection
-main()
-  .then(() => console.log("Connected To DB"))
-  .catch((err) => console.log("DB Connection Error:", err));
+const secret = process.env.SECRET;
 
-async function main() {
-  await mongoose.connect(dbUrl);
+if (!dbUrl) {
+  console.error("❌ ATLASDB_URL not defined");
+}
+if (!secret) {
+  console.error("❌ SECRET not defined");
 }
 
-// 2. MongoStore Setup (VERSION 4+ Syntax)
+// ======================
+// DATABASE CONNECTION
+// ======================
+mongoose
+  .connect(dbUrl)
+  .then(() => console.log("✅ Connected To MongoDB"))
+  .catch((err) => console.log("❌ DB Connection Error:", err));
+
+// ======================
+// SESSION STORE
+// ======================
 const store = MongoStore.create({
   mongoUrl: dbUrl,
-  touchAfter: 24 * 3600, // 1 day
+  touchAfter: 24 * 3600,
 });
 
 store.on("error", (e) => {
-    console.log("SESSION STORE ERROR", e);
+  console.log("❌ SESSION STORE ERROR", e);
 });
 
-// 3. Session Options
-const sessionOption = {
-  store, // Store variable pass kiya
-  secret: secret,
+const sessionOptions = {
+  store,
+  name: "session",
+  secret,
   resave: false,
-  saveUninitialized: true,
+  saveUninitialized: false,
   cookie: {
-    expires: Date.now() + 7 * 24 * 60 * 60 * 1000, // ms mein convert kiya
+    httpOnly: true,
+    expires: Date.now() + 7 * 24 * 60 * 60 * 1000,
     maxAge: 7 * 24 * 60 * 60 * 1000,
-    httpOnly: true
   },
 };
 
-console.log("DB URL:", dbUrl);
-console.log("SESSION SECRET:", secret);
-
-// 4. App Settings & Middlewares (Sirf ek baar)
+// ======================
+// APP CONFIG
+// ======================
 app.engine("ejs", ejsMate);
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
 app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 app.use(methodOverride("_method"));
 app.use(express.static(path.join(__dirname, "public")));
-app.use(express.json());
 
-app.use(session(sessionOption));
+app.use(session(sessionOptions));
 app.use(flash());
 
-// 5. Passport Setup
+// ======================
+// PASSPORT CONFIG
+// ======================
 app.use(passport.initialize());
 app.use(passport.session());
 passport.use(new LocalStrategy(User.authenticate()));
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
+// ======================
+// GLOBAL MIDDLEWARE
+// ======================
 app.use((req, res, next) => {
   res.locals.success = req.flash("success");
   res.locals.error = req.flash("error");
@@ -84,35 +99,40 @@ app.use((req, res, next) => {
   next();
 });
 
-// 6. Routes
-app.use("/listings", ListingRouter);
+// ======================
+// ROOT ROUTE (IMPORTANT 🔥)
+// ======================
+app.get("/", (req, res) => {
+  res.redirect("/listings");
+});
+
+// ======================
+// ROUTES
+// ======================
+app.use("/listings", listingRouter);
 app.use("/listings/:id/reviews", reviewRouter);
 app.use("/", userRouter);
 
-// 7. Error Handling
-// Error Handler (Replace your Step 7 with this)
-app.use((err, req, res, next) => {
-  let { statusCode = 500, message = "Something went wrong!" } = err;
-  
-  if (res.headersSent) {
-    return next(err);
-  }
-
-  // Safety: Agar currUser middleware fail hua ho, toh template crash na ho
-  res.status(statusCode).render("error.ejs", { 
-    err, 
-    currUser: req.user || null // Forcefully pass currUser here too
-  });
+// ======================
+// 404 HANDLER
+// ======================
+app.all("*", (req, res, next) => {
+  next(new ExpressError("Page Not Found", 404));
 });
 
+// ======================
+// ERROR HANDLER (ONLY ONE)
+// ======================
 app.use((err, req, res, next) => {
-  let { statusCode = 500, message = "Something went wrong!" } = err;
-  if (res.headersSent) {
-    return next(err);
-  }
+  const { statusCode = 500, message = "Something went wrong!" } = err;
   res.status(statusCode).render("error.ejs", { err });
 });
 
-app.listen(8080, () => {
-  console.log("Server is listening on port 8080");
+// ======================
+// SERVER (RENDER SAFE)
+// ======================
+const port = process.env.PORT || 3000;
+
+app.listen(port, () => {
+  console.log(`🚀 Server running on port ${port}`);
 });
