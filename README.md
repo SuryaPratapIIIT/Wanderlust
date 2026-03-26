@@ -23,7 +23,7 @@ Backend: Node.js, Express.js
 
 Database: MongoDB (using Mongoose ODM)
 
-Cloud Services: Cloudinary (Image Hosting), Mapbox (Maps)
+Cloud Services: Cloudinary (Image Hosting)
 
 Deployment: Render
 
