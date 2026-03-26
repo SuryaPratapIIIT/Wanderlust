@@ -1,5 +1,5 @@
 Wanderlust – Where Travel Meets Comfort
-Wanderlust is a full-stack web application designed to help travelers find and list comfortable accommodations worldwide. It features a robust listing management system, user authentication, and interactive maps to enhance the travel planning experience.
+Wanderlust is a full-stack web application designed to help travelers find and list comfortable accommodations worldwide. It features a robust listing management system, user authentication to enhance the travel planning experience.
 
 🔗 Live Demo: (https://travelio-journey.onrender.com/listings)
 
