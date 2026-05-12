@@ -25,7 +25,7 @@ Database: MongoDB (using Mongoose ODM)
 
 Cloud Services: Cloudinary (Image Hosting)
 
-Deployment: Render
+Deployment: Vercel
 
 📁 Folder Structure
 Plaintext
