@@ -62,7 +62,7 @@ async function main() {
 
 // ROOT Route
 app.get("/", (req, res) => {
-  res.send("Hi, I am Root");
+  res.redirect("/listings");
 });
 
 
