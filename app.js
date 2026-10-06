@@ -65,6 +65,10 @@ app.get("/", (req, res) => {
   res.redirect("/listings");
 });
 
+app.get("/health", (req, res) => {
+  res.send("OK");
+});
+
 
 app.use(session(sessionOption));
 app.use(flash());

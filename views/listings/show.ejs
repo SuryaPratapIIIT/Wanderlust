@@ -16,7 +16,7 @@
 
         <div id="map" style="height: 400px; width: 100%; border-radius: 0.5rem;" class="mb-3"></div>
         
-        <% if(currUser && listing.owner._id.equals(currUser._id)){ %>
+        <% if(currUser && listing.owner && listing.owner._id.equals(currUser._id)){ %>
         <div class="btns mb-3 d-flex">
             <a href="/listings/<%= listing._id%>/edit" class="btn btn-dark edit-btn me-3">Edit</a>
             <form method="POST" action="/listings/<%= listing._id %>?_method=DELETE">
