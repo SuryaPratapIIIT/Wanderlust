@@ -1,5 +1,9 @@
+const mongoose = require("mongoose");
 const Listing = require("../models/listing");
 const geocodeAddress = require("../utils/geocoder");
+
+const DEFAULT_IMAGE_URL =
+  "https://plus.unsplash.com/premium_photo-1748894837513-e52e18135365?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0";
 
 module.exports.index=async (req, res) => {
   const allListing = await Listing.find({});
@@ -13,6 +17,10 @@ module.exports.renderNewForm = (req, res) => {
 
 module.exports.showListing=async (req, res) => {
   const { id } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    req.flash("error", "Listing you requested for does not exist !");
+    return res.redirect("/listings");
+  }
   const listing = await Listing.findById(id)
     .populate({
       path: "reviews",
@@ -45,13 +53,17 @@ module.exports.createListing=async (req, res, next) => {
 
   module.exports.renderEditForm=async (req, res) => {
     const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      req.flash("error", "Listing you requested for does not exist !");
+      return res.redirect("/listings");
+    }
     const listing = await Listing.findById(id);
      if(!listing)
     {
       req.flash("error","Listing you requested for does not exist !");
-      res.redirect("/listings");
+      return res.redirect("/listings");
     }
-    let originalImageUrl= listing.image.url;
+    let originalImageUrl= (listing.image && listing.image.url) || DEFAULT_IMAGE_URL;
     originalImageUrl=originalImageUrl.replace("/upload","/upload/w_250");
     res.render("listings/edit.ejs", { listing,originalImageUrl });
   };

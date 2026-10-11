@@ -43,30 +43,30 @@ app.engine("ejs", ejsMate);
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "/views"));
 
+// Keep-alive probe must be registered first and never touch Mongo/session/views.
+app.get("/health", (req, res) => {
+  res.status(200).type("text/plain").send("OK");
+});
+
 // Middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
 app.use(express.static(path.join(__dirname, "public")));
 
-// MongoDB Connection
-main()
-  .then(() => {
+async function connectDB() {
+  try {
+    await mongoose.connect(MONGO_URL);
     console.log("Connection Successful");
-  })
-  .catch((err) => console.log(err));
-
-async function main() {
-  await mongoose.connect(MONGO_URL);
+  } catch (err) {
+    console.log("MongoDB connection failed, retrying in 5s:", err.message);
+    setTimeout(connectDB, 5000);
+  }
 }
-
+connectDB();
 
 // ROOT Route
 app.get("/", (req, res) => {
   res.redirect("/listings");
-});
-
-app.get("/health", (req, res) => {
-  res.send("OK");
 });
 
 
@@ -112,9 +112,16 @@ app.all("*", (req, res, next) => {
 
 // Error Handler
 app.use((err, req, res, next) => {
+  if (req.path === "/health") {
+    return res.status(200).type("text/plain").send("OK");
+  }
+  if (err.name === "CastError") {
+    err.statusCode = 400;
+    err.message = "Invalid ID";
+  }
   const { statusCode = 500, message = "Something went wrong!" } = err;
-  res.status(statusCode).render("error.ejs",{err});
- // res.status(statusCode).send(message);
+  err.message = err.message || message;
+  res.status(statusCode).render("error.ejs", { err });
 });
 
 // Server Start
